@@ -183,3 +183,34 @@ Make sure you have the following installed on your system:
 6. **Use FastAPI builtin swagger docs:**
 
     Open your web browser and go to [http://localhost:8001/docs](http://localhost:8001/docs) (or the port you specified) to access the running documentation web app.
+
+---
+
+# Handling the .env File
+
+To handle the provided `.env` file, follow these basic instructions:
+
+1. **Create a MongoDB Cluster:**
+
+   - Create a MongoDB cluster using the free tier on the [MongoDB Atlas](https://www.mongodb.com/atlas/database) platform.
+   - Obtain the cluster connection string.
+
+2. **Fill in Missing Values:**
+
+   - Open the `.env` file in a text editor.
+   - Fill in the missing values for the following variables:
+     - `MONGODB_CLUSTER`: Replace it with the MongoDB cluster connection string.
+     - `MONGODB_USERNAME`: Set your MongoDB username.
+     - `MONGODB_PASSWORD`: Set your MongoDB password.
+     - `JWT_SECRET_KEY`: Choose a secret value for JWT token signing.
+     - Ensure other variables like `JWT_EXPIRATION_TIME_IN_MINUTES`, `JWT_REFRESH_EXPIRATION_TIME_IN_HOURS`, `JWT_ALGORITHM`, and `ENCRYPTION_SCHEMES` have appropriate values. You can use the provided values or customize them based on your requirements.
+     - `USER_SERVICE_URL`: Set the URL of the user service. The default is set to `http://127.0.0.1:8002`, but update it if your user service is hosted elsewhere.
+
+3. **Save and Rename:**
+
+   - Save the changes to the `.env` file.
+   - Rename the file from `.env` to just `.env`. Ensure there is no additional extension (e.g., `.txt`).
+
+4. **Keep Secure:**
+
+   - Ensure that the `.env` file is kept secure and not shared publicly. It contains sensitive information like passwords and secret keys.
