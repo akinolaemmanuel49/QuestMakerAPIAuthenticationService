@@ -25,8 +25,9 @@ class AuthenticationService:
                 passwordHash=hash_manager.hash_password(data.password),
                 firstName=data.firstName,
                 lastName=data.lastName,
-                roleIds=data.roleIds,
-                organizationId=data.organizationId,
+                roleIds=[str(roleId) for roleId in data.roleIds],
+                organizationIds=[str(organizationId)
+                                 for organizationId in data.organizationIds],
                 userType=data.userType,
                 createdAt=str(datetime.utcnow()),
                 updatedAt=str(datetime.utcnow())
@@ -38,25 +39,26 @@ class AuthenticationService:
             # Create new auth instance in database collection
             document = db.auth_collection.insert_one(auth_dict)
 
-            # Load auth_dict int AuthResponse container
-            user = AuthResponse(
+            # Load auth_dict into AuthResponse container
+            response = AuthResponse(
                 _id=str(document.inserted_id),
                 email=auth.email,
                 firstName=auth.firstName,
                 lastName=auth.lastName,
-                roleIds=auth.roleIds,
-                organizationId=auth.organizationId,
+                roleIds=[str(roleId) for roleId in auth.roleIds],
+                organizationIds=[str(organizationId)
+                                 for organizationId in auth.organizationIds],
                 userType=auth.userType,
                 createdAt=auth.createdAt,
                 updatedAt=auth.updatedAt
             )
 
             # Return the AuthResponse container
-            return user
+            return response
 
         except DuplicateKeyError:
             raise ValueError(
-                "Auth credentials with the same email already exist")
+                'Auth credentials with the same email already exist')
 
         except Exception as e:
             raise e
@@ -64,8 +66,12 @@ class AuthenticationService:
     def read(self, auth_id: PydanticObjectId) -> AuthResponse:
         try:
             document = db.auth_collection.find_one({'_id': ObjectId(auth_id)})
-            # Convert ObjectId to string
+            # Convert ObjectId's to strings
             document['_id'] = str(document['_id'])
+            document['roleIds'] = [str(roleId)
+                                   for roleId in document['roleIds']]
+            document['organizationIds'] = [
+                str(organizationId) for organizationId in document['organizationIds']]
             document = AuthResponse(**document)
             return document
         except Exception as e:
@@ -76,13 +82,20 @@ class AuthenticationService:
         try:
             if isinstance(data, AuthUpdate):
                 data = data.model_dump(exclude_unset=True)
+    
             # Update and convert date in updatedAt field to string
             data['updatedAt'] = str(datetime.utcnow())
+            if data.get('roleIds'):
+                data['roleIds'] = [str(roleId)
+                                    for roleId in data['roleIds']]
+            if data.get('organizationIds'):
+                data['organizationIds'] = [
+                    str(organizationId) for organizationId in data['organizationIds']]
             # Find and update an auth instance
             db.auth_collection.update_one(
                 {'_id': ObjectId(auth_id)}, {'$set': data})
-        except Exception:
-            pass
+        except Exception as e:
+            raise e
 
     def delete(self, auth_id: PydanticObjectId):
         try:

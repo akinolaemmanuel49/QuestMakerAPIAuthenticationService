@@ -8,17 +8,17 @@ class AuthCreate(BaseModel):
     password: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[str]] = []
-    organizationId: Optional[List[str]] = []
+    roleIds: Optional[List[PydanticObjectId]] = []
+    organizationIds: Optional[List[PydanticObjectId]] = []
     userType: str = 'regular'
 
 
 class AuthUpdate(BaseModel):
-    email: str
+    email: Optional[str] =  None
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[str]] = []
-    organizationId: Optional[List[str]] = []
+    roleIds: Optional[List[PydanticObjectId]] = []
+    organizationIds: Optional[List[PydanticObjectId]] = []
 
 
 class AuthResponse(BaseModel):
@@ -26,8 +26,8 @@ class AuthResponse(BaseModel):
     email: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[str]] = []
-    organizationId: Optional[List[str]] = []
+    roleIds: Optional[List[PydanticObjectId]] = []
+    organizationIds: Optional[List[PydanticObjectId]] = []
     userType: str
     createdAt: str
     updatedAt: str
@@ -38,8 +38,8 @@ class AuthInDB(BaseModel):
     passwordHash: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[str]] = []
-    organizationId: Optional[List[str]] = []
+    roleIds: Optional[List[PydanticObjectId]] = []
+    organizationIds: Optional[List[PydanticObjectId]] = []
     userType: str
     createdAt: str
     updatedAt: str
