@@ -131,7 +131,7 @@ Follow the instructions below to clone a GitHub repository, install the required
 Make sure you have the following installed on your system:
 
 - [Git](https://git-scm.com/)
-- [Python](https://www.python.org/) (preferably Python 3.x)
+- [Python](https://www.python.org/) (preferably Python >= 3.11)
 - [pip](https://pip.pypa.io/) (Python package installer)
 
 ## Steps
