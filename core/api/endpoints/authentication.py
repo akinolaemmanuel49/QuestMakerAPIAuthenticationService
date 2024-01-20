@@ -121,7 +121,8 @@ def deactivate_account(token: HTTPAuthorizationCredentials = Security(bearer)):
     scope = str(payload['scope'])
     if 'access_token' in scope.split():
         auth_id = str(payload['sub'])
-        return service.delete(auth_id=auth_id)
+        service.delete(auth_id=auth_id)
+        return 'Successfully deleted'
     else:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail={
                             'message': 'Insufficient scope'})
@@ -140,7 +141,7 @@ def change_password(data: AuthChangePassword, token: HTTPAuthorizationCredential
         data = {'passwordHash': hash_manager.hash_password(
             password=data.password)}
         service.update(auth_id, data=data)
-        return
+        return 'Successfully changed password'
     else:
         raise HTTPException(status_code=HTTPStatus.FORBIDDEN, detail={
                             'message': 'Insufficient scope'})
