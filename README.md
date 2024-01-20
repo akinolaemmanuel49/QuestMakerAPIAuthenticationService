@@ -55,7 +55,7 @@ Update authentication information.
     - `organizationId` (optional): New list of organization IDs for the user.
 
 - **Response:**
-  - Returns the updated authentication information.
+  - Returns string `'Successfully updated'`.
 
 - **Error Handling:**
   - Throws an HTTPException with status code 403 if the token lacks the necessary scope.
@@ -69,7 +69,7 @@ Deactivate user account.
     - `Authorization`: Bearer token.
 
 - **Response:**
-  - Returns success if the user account is deactivated.
+  - Returns string `'Successfully deleted'` if the user account is deactivated.
 
 - **Error Handling:**
   - Throws an HTTPException with status code 403 if the token lacks the necessary scope.
@@ -85,7 +85,7 @@ Change user password.
     - `password`: New password for the user.
 
 - **Response:**
-  - Returns success if the password is successfully changed.
+  - Returns string `'Successfully changed password'` if the password is successfully changed.
 
 - **Error Handling:**
   - Throws an HTTPException with status code 403 if the token lacks the necessary scope.
@@ -131,7 +131,7 @@ Follow the instructions below to clone a GitHub repository, install the required
 Make sure you have the following installed on your system:
 
 - [Git](https://git-scm.com/)
-- [Python](https://www.python.org/) (>= Python 3.11)
+- [Python](https://www.python.org/) (preferably Python >= 3.11)
 - [pip](https://pip.pypa.io/) (Python package installer)
 
 ## Steps
