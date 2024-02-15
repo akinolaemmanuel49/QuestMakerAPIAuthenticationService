@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from bson import ObjectId
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError as MongoDBDuplicateKeyError
 from quest_maker_api_shared_library.custom_types import PydanticObjectId
+from quest_maker_api_shared_library.errors.database import DuplicateKeyError
 
 from core.models.authentication import AuthCreate, AuthInDB, AuthOutDB, AuthResponse, AuthUpdate, Credentials
 from core.utils.hash_manager import HashManager
@@ -25,9 +26,8 @@ class AuthenticationService:
                 passwordHash=hash_manager.hash_password(data.password),
                 firstName=data.firstName,
                 lastName=data.lastName,
-                roleIds=[str(roleId) for roleId in data.roleIds],
-                organizationIds=[str(organizationId)
-                                 for organizationId in data.organizationIds],
+                roles=data.roles,
+                organizations=data.organizations,
                 userType=data.userType,
                 createdAt=str(datetime.utcnow()),
                 updatedAt=str(datetime.utcnow())
@@ -45,9 +45,8 @@ class AuthenticationService:
                 email=auth.email,
                 firstName=auth.firstName,
                 lastName=auth.lastName,
-                roleIds=[str(roleId) for roleId in auth.roleIds],
-                organizationIds=[str(organizationId)
-                                 for organizationId in auth.organizationIds],
+                roles=auth.roles,
+                organizations=auth.organizations,
                 userType=auth.userType,
                 createdAt=auth.createdAt,
                 updatedAt=auth.updatedAt
@@ -56,24 +55,27 @@ class AuthenticationService:
             # Return the AuthResponse container
             return response
 
-        except DuplicateKeyError:
-            raise ValueError(
-                'Auth credentials with the same email already exist')
+        except MongoDBDuplicateKeyError:
+            raise DuplicateKeyError
 
         except Exception as e:
             raise e
 
-    def read(self, auth_id: PydanticObjectId) -> AuthResponse:
+    def read(self, auth_id: PydanticObjectId) -> Optional[AuthResponse]:
         try:
             document = db.auth_collection.find_one({'_id': ObjectId(auth_id)})
-            # Convert ObjectId's to strings
-            document['_id'] = str(document['_id'])
-            document['roleIds'] = [str(roleId)
-                                   for roleId in document['roleIds']]
-            document['organizationIds'] = [
-                str(organizationId) for organizationId in document['organizationIds']]
-            document = AuthResponse(**document)
-            return document
+            if document:
+                if document['organizations']:
+                    for organization in document['organizations']:
+                        organization['id'] = str(organization['id'])
+                        organization['ownerId'] = str(organization['ownerId'])
+                if document['roles']:
+                    for role in document['roles']:
+                        role['_id'] = str(role['_id'])
+                        role['organizationId'] = str(role['organizationId'])
+                document = AuthResponse(**document)
+                return document
+            return None
         except Exception as e:
             raise e
 
@@ -82,16 +84,18 @@ class AuthenticationService:
         try:
             if isinstance(data, AuthUpdate):
                 data = data.model_dump(exclude_unset=True)
-    
+
             # Update and convert date in updatedAt field to string
             data['updatedAt'] = str(datetime.utcnow())
-            if data.get('roleIds'):
-                data['roleIds'] = [str(roleId)
-                                    for roleId in data['roleIds']]
-            if data.get('organizationIds'):
-                data['organizationIds'] = [
-                    str(organizationId) for organizationId in data['organizationIds']]
-            # Find and update an auth instance
+            if data.get('organizations'):
+                for organization in data['organizations']:
+                    organization['id'] = ObjectId(organization['id'])
+                    organization['ownerId'] = ObjectId(organization['ownerId'])
+            if data.get('roles'):
+                for role in data['roles']:
+                    role['_id'] = ObjectId(role['_id'])
+                    role['organizationId'] = ObjectId(role['organizationId'])
+
             db.auth_collection.update_one(
                 {'_id': ObjectId(auth_id)}, {'$set': data})
         except Exception as e:
@@ -100,7 +104,7 @@ class AuthenticationService:
     def delete(self, auth_id: PydanticObjectId):
         try:
             # Delete an auth instance using it's id
-            db.auth_collection.delete_one({"_id": ObjectId(auth_id)})
+            db.auth_collection.delete_one({'_id': ObjectId(auth_id)})
         except Exception as e:
             raise e
 
@@ -116,7 +120,7 @@ class AuthenticationService:
                 )
                 if is_match:
                     return is_match, out
-            else:
-                raise ValueError('Invalid password')
+                else:
+                    raise ValueError('Invalid password')
         except Exception as e:
             raise e

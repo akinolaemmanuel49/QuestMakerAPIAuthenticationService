@@ -1,6 +1,15 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, SecretStr
 from quest_maker_api_shared_library.custom_types import PydanticObjectId
+
+
+class Organization(BaseModel):
+    id: PydanticObjectId = Field(alias='id')
+    name: str
+    description: Optional[str]
+    ownerId: PydanticObjectId = Field(alias='ownerId')
+    createdAt: str
+    updatedAt: str
 
 
 class AuthCreate(BaseModel):
@@ -8,17 +17,17 @@ class AuthCreate(BaseModel):
     password: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[PydanticObjectId]] = []
-    organizationIds: Optional[List[PydanticObjectId]] = []
+    roles: Optional[List[Dict[str, Any]]] = []
+    organizations: Optional[List[Organization]] = []
     userType: str = 'regular'
 
 
 class AuthUpdate(BaseModel):
-    email: Optional[str] =  None
+    email: Optional[str] = None
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[PydanticObjectId]] = []
-    organizationIds: Optional[List[PydanticObjectId]] = []
+    roles: Any = []
+    organizations: Optional[List[Organization]] = []
 
 
 class AuthResponse(BaseModel):
@@ -26,8 +35,8 @@ class AuthResponse(BaseModel):
     email: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[PydanticObjectId]] = []
-    organizationIds: Optional[List[PydanticObjectId]] = []
+    roles: Optional[List[Dict[str, Any]]] = []
+    organizations: Optional[List[Organization]] = []
     userType: str
     createdAt: str
     updatedAt: str
@@ -38,8 +47,8 @@ class AuthInDB(BaseModel):
     passwordHash: str
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    roleIds: Optional[List[PydanticObjectId]] = []
-    organizationIds: Optional[List[PydanticObjectId]] = []
+    roles: Optional[List[Dict[str, Any]]] = []
+    organizations: Optional[List[Organization]] = []
     userType: str
     createdAt: str
     updatedAt: str
@@ -60,3 +69,13 @@ class Token(BaseModel):
 
 class AuthChangePassword(BaseModel):
     password: str
+
+
+class Message(BaseModel):
+    statusCode: int
+    message: str
+    data: Any
+
+
+class ErrorMessage(Message):
+    pass
