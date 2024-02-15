@@ -1,14 +1,14 @@
 from http import HTTPStatus
 from typing import Optional
 
+import requests
 from fastapi import APIRouter, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from quest_maker_api_shared_library.token_manager import TokenManager
 from quest_maker_api_shared_library.custom_types import PydanticObjectId
-import requests
 
 from core.config.env import Env
-from core.models.authentication import AuthChangePassword, AuthCreate, AuthUpdate
+from core.models.authentication import AuthChangePassword, AuthCreate, AuthResponse, AuthUpdate
 from core.services.authentication import AuthenticationService
 
 
@@ -20,9 +20,9 @@ token_manager = TokenManager(key=env.JWT_SECRET_KEY.get_secret_value(),
                              jwt_expiration_time_in_minutes=env.JWT_EXPIRATION_TIME_IN_MINUTES,)
 
 
-@auth.post('/')
+@auth.post('/', status_code=HTTPStatus.CREATED)
 # Create new authentication instance
-def create_auth(data: AuthCreate) -> Optional[PydanticObjectId]:
+def create_auth(data: AuthCreate) -> Optional[AuthResponse]:
     try:
         user = service.create(data=data)
         try:
@@ -33,11 +33,14 @@ def create_auth(data: AuthCreate) -> Optional[PydanticObjectId]:
                 exclude={'id', 'createdAt', 'updatedAt'})
             # Add new key 'auth_id'
             json_data['auth_id'] = str(user.id)
-            if json_data.get('roleIds'):
-                json_data['roleIds'] = [str(roleId) for roleId in user.roleIds]
-            if json_data.get('organizationIds'):
-                json_data['organizationIds'] = [
-                    str(organizationId) for organizationId in user.organizationIds]
+            if json_data.get('roles'):
+                for role in json_data['roles']:
+                    role['_id'] = str(role['_id'])
+                    role['organizationId'] = str(role['organizationId'])
+            if json_data.get('organizations'):
+                for organization in json_data['organizations']:
+                    organization['id'] = str(organization['id'])
+                    organization['ownerId'] = str(organization['ownerId'])
 
             # Set up request headers
             headers = {'Authorization': f'Bearer {token}'}
@@ -49,7 +52,7 @@ def create_auth(data: AuthCreate) -> Optional[PydanticObjectId]:
                                      headers=headers)
 
             if response.status_code == HTTPStatus.CREATED:
-                return user.id
+                return user
             else:
                 raise HTTPException(status_code=response.status_code,
                                     detail='Failed to create a user in the User service')
@@ -85,12 +88,17 @@ def update_auth(data: AuthUpdate, token: HTTPAuthorizationCredentials = Security
 
                 # Convert user profile data into a dict
                 json_data = data.model_dump(exclude_unset=True)
-                if json_data.get('roleIds'):
-                    json_data['roleIds'] = [str(roleId)
-                                            for roleId in data.roleIds]
-                if json_data.get('organizationIds'):
-                    json_data['organizationIds'] = [
-                        str(organizationId) for organizationId in data.organizationIds]
+
+                json_data['auth_id'] = str(auth_id)
+                if json_data.get('roles'):
+                    for role in json_data['roles']:
+                        role['_id'] = str(role['_id'])
+                        role['organizationId'] = str(role['organizationId'])
+                if json_data.get('organizations'):
+                    for organization in json_data['organizations']:
+                        organization['id'] = str(organization['id'])
+                        organization['ownerId'] = str(organization['ownerId'])
+                
 
                 # Set up request headers
                 headers = {'Authorization': f'Bearer {token.credentials}'}
@@ -115,7 +123,7 @@ def update_auth(data: AuthUpdate, token: HTTPAuthorizationCredentials = Security
                             'message': 'Insufficient scope'})
 
 
-@auth.delete('/deactivate/')
+@auth.delete('/deactivate/', status_code=HTTPStatus.NO_CONTENT)
 def deactivate_account(token: HTTPAuthorizationCredentials = Security(bearer)):
     payload = token_manager.decode_token(token=token.credentials)
     scope = str(payload['scope'])
